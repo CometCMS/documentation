@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'CometCMS',
   description: 'Documentation for CometCMS — a lightweight file-based CMS.',
-  base: '/CometCMS/',
+  base: '/documentation/',
   themeConfig: {
     logo: { light: '/cms-logo-black.png', dark: '/cms-logo-white.png' },
     siteTitle: false,
