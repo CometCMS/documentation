@@ -8,6 +8,7 @@ export default defineConfig({
     logo: { light: '/cms-logo-black.png', dark: '/cms-logo-white.png' },
     siteTitle: false,
     nav: [
+      { text: 'Website', link: 'https://cometcms.github.io' },
       { text: 'Guide', link: '/guide/introduction' },
       { text: 'API Reference', link: '/api/public-api' },
     ],
@@ -72,7 +73,9 @@ export default defineConfig({
         ],
       },
     ],
-    socialLinks: [],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/CometCMS/CometCMS' },
+    ],
     search: {
       provider: 'local',
     },

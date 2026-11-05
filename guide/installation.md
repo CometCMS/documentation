@@ -17,12 +17,12 @@ The PHP `zip` extension enables ZIP backups, restore, and release installation. 
 
 ### Install a release
 
-Download the built ZIP from [GitHub Releases](https://github.com/GetCometCMS/CometCMS/releases/latest), extract it, and upload its contents to your server. Include hidden files such as `.htaccess` and `.user.ini`. Continue with the web-server configuration below. No local build is needed for a release ZIP.
+Download the built ZIP from [GitHub Releases](https://github.com/CometCMS/CometCMS/releases/latest), extract it, and upload its contents to your server. Include hidden files such as `.htaccess` and `.user.ini`. Continue with the web-server configuration below. No local build is needed for a release ZIP.
 
 ### 1. Build from source (optional)
 
 ```bash
-git clone https://github.com/GetCometCMS/CometCMS.git
+git clone https://github.com/CometCMS/CometCMS.git
 cd CometCMS
 nvm use
 npm ci

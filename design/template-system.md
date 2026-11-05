@@ -212,8 +212,8 @@ account menu) after the status:
 - MCP: `get_layout` / `set_layout` / `update_*` take an optional `content` id
   (default: the default template's area). `set_layout_frame` becomes
   `set_template_parts` (template id + header/content/footer). Add
-  `list_templates`. Update `docs/api/mcp.md`, `docs/design/mcp-page-builder.md`
-  and `docs/public/api/openapi.yaml`.
+  `list_templates`. Update `api/mcp.md`, `design/mcp-page-builder.md`
+  and `public/api/openapi.yaml`.
 
 ## Phases (one commit each, suite green after each)
 
