@@ -192,6 +192,10 @@ Choose **Background gradient** in the same group for a two-color **Linear** or *
 
 Headings and Text elements also offer **Text gradient** in the **Text** style group, with the same controls. It colors the text block, including linked and bound text, and works alongside a background color, gradient or image. Code blocks, highlighted text and table headers keep a solid text color for readability on their own backgrounds. **None** restores the regular text color. Browsers without text clipping support keep the regular text color.
 
+**Background effect**, at the end of the same group, appears when an installed extension offers [backgrounds](./extensions.md#backgrounds) for sections, rows and columns, such as animated starfields, grids or an interactive water ripple. Pick one, then set its own options below it: colors from the theme, intensity, motion and so on. The effect is drawn over the background color and image and under the overlay, behind the content, so rows, columns and elements stay on top and clickable. The background color remains the surface behind the effect. Choose **None** to remove it. Effects do not change per device or on hover. The example effects stand still for visitors who prefer reduced motion. If the extension is disabled or removed, the effect is not drawn, but the choice is kept and returns with the extension.
+
+The **Effect sections** group of the **Add** panel offers each of these backgrounds as a ready section: it adds a section with one column, the effect behind it and a starting look chosen by the extension, often a dark surface with light text and half the screen's height. Add columns with the column layout picker as usual. Dropped into a column, it adds a row with the effect instead.
+
 Layouts saved before background images became a style keep their section images; they are moved into the section's style the next time the layout is loaded.
 
 ### Entry cards

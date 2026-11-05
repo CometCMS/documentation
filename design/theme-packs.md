@@ -10,7 +10,7 @@ Extensions can now seed several presets through `presets/<id>.json`, alongside t
 
 Website Design now treats built-in designs (`Theme::BUILT_IN_THEMES`) and site presets as **themes**. `theme.json` records the active one as `active_theme` (`builtin:{id}` or `preset:{id}`). Edits customize it; the designer shows it as modified when resetting or switching would discard them. Resetting or switching applies a theme's definition and keeps custom CSS, plus custom colors and shadows the theme lacks. Site-owned presets can be overwritten with the current design (`PUT /admin/api/site/theme/presets/{id}`). Extension presets cannot be overwritten, so their ledger hash stays valid for updates.
 
-A preset is enough for a coordinated palette and typography, but it cannot define glass surfaces, backdrop blur, decorative backgrounds or global button treatments. Today those require element styles or site custom CSS. The root extension `style.css` serves custom blocks and is included when their blocks render; it does not establish a selectable site theme.
+A preset is enough for a coordinated palette and typography, but it cannot define glass surfaces, backdrop blur, decorative backgrounds or global button treatments. Decorative backgrounds can now come from extension [backgrounds](../guide/extensions.md#backgrounds), which editors choose per section, row or column; a theme cannot apply them site-wide. The rest still requires element styles or site custom CSS. The root extension `style.css` serves custom blocks and is included when their blocks render; it does not establish a selectable site theme.
 
 ## Recommended product model
 

@@ -2,9 +2,22 @@
 
 <div v-pre>
 
-Extensions bring reusable blocks and optional starter content to a workspace. An extension is a ZIP with `comet-extension.json`; everything else is optional. Blocks stay installed with the extension. Content types, components, template lists with their layouts, theme presets and fonts are copied into normal site storage once, then belong to your site.
+Extensions bring reusable blocks, section [backgrounds](#backgrounds) and optional starter content to a workspace. An extension is a ZIP with `comet-extension.json`; everything else is optional. Blocks stay installed with the extension. Content types, components, template lists with their layouts, theme presets and fonts are copied into normal site storage once, then belong to your site.
 
 One install preview shows breaking changes, blocks with JavaScript, and every site item being copied. Confirming it submits these decisions together. Existing items default to **Skip**; choose **Overwrite** per item when you want to replace them. Reinstalling or updating an extension asks again. Installing a theme preset adds it to the designer's **Themes** without applying it.
+
+## Choosing what to build
+
+| You want | Build | Why |
+| --- | --- | --- |
+| A self-contained piece of content: a callout, pricing plan, map, testimonial | A [block](#blocks) | Editors place it like a built-in element and fill in its props. |
+| A frame around a few elements editors choose, such as a card with a heading, text and buttons | A block with a [slot](#slots) | The slot holds elements, but not rows or columns. |
+| A decorative or interactive effect behind content: animated shapes, a starfield, a canvas | A [background](#backgrounds) | Sections, rows and columns keep their layout, rows and columns; the effect sits behind them. |
+| A ready-made arrangement of sections, rows and elements that sites then own and edit | A seeded [component](#seeded-site-content) | It becomes normal site content built from existing elements and blocks, and is not tied to the extension after import. |
+| Page designs for a content type, or a coordinated palette and typography | Seeded [templates](#seeded-site-content), [presets](#seeded-site-content) and [fonts](#seeded-site-content) | They are copied into the site once. |
+| A value an administrator sets once for all blocks, such as an API endpoint or units | [Settings](#settings) | Templates and scripts of every block read them. |
+
+Combine them freely: a background and a component that starts a hero section with it, or blocks with a shared setting. If an effect is meant to hold rows or columns, make it a background, not a block with a slot.
 
 ## Quick start
 
@@ -86,9 +99,9 @@ Zipping the folder yourself works too. A single top-level folder inside the ZIP 
 | `requires` | Optional object of up to 32 extension names with [version constraints](#dependencies), such as `{"cometcms/essentials": "^1.7"}`. |
 | `cms` | Optional version constraint for the CometCMS release, such as `">=2.0"`. Installation and enabling are refused on other releases. |
 | `settings` | Optional object of up to 32 workspace-wide [settings](#settings). |
-| `permissions` | Optional [network permissions](#network-permissions) for block scripts: `{"connect": ["https://api.example.com"]}`. |
-| `shared_props` | Optional object of up to 32 [shared props](#shared-props) that blocks reuse with `{"use": "name"}`. |
-| `$schema` | Optional path or URL of the [JSON schema](#tools-for-editors-and-agents), for editors. Ignored by CometCMS. `block.json` and translation files accept it too. |
+| `permissions` | Optional [network permissions](#network-permissions) for block and background scripts: `{"connect": ["https://api.example.com"]}`. |
+| `shared_props` | Optional object of up to 32 [shared props](#shared-props) that blocks and backgrounds reuse with `{"use": "name"}`. |
+| `$schema` | Optional path or URL of the [JSON schema](#tools-for-editors-and-agents), for editors. Ignored by CometCMS. `block.json`, `background.json` and translation files accept it too. |
 
 Other fields are rejected, so a typo cannot go unnoticed.
 
@@ -425,12 +438,145 @@ A page includes the CSS of the extensions and blocks it renders, once each, in a
 
 Files under `assets/` (in up to three levels of subfolders) can be `svg png jpg jpeg gif webp avif woff2 mp4 webm`, at most 8 MiB each. Their content must match the extension. Reference them as `assets/…` from templates and as `url(assets/…)` from any CSS file in the extension. CometCMS rewrites these to content-hashed URLs under `/_site/<workspace>/blocks/`, served with long-lived immutable caching. Other relative URLs in CSS are rejected, for the same reason as in templates.
 
+## Backgrounds
+
+A background is a decorative layer that a section, row or column shows behind its content: a starfield, a moving grid, an interactive canvas. Editors pick one under **Style → Background → Background effect**, or add a ready-made section from the **Effect sections** group of the elements palette. The section keeps everything it normally has, so it still holds rows and columns, and its width, height, sticky and scroll options still apply.
+
+Use a background when the effect belongs behind content. Use a block when the effect is the content, and a block with a [slot](#slots) when it frames a few elements, like a card.
+
+```text
+backgrounds/
+  aurora/
+    background.json   # required: title, props, optional section start
+    template.html     # the layer's markup (optional with a view.js)
+    style.css         # optional
+    view.js           # optional: mounted on the layer
+    icon.svg          # optional palette icon
+```
+
+A background needs `background.json`, plus `template.html`, `view.js` or both. Like blocks, it is named after the extension vendor and its folder: `backgrounds/aurora` in `acme/glow` is **`acme/aurora`**. Saved layouts store the choice in the style of the section, row or column:
+
+```json
+"style": { "background_fx": { "kind": "block:acme/aurora", "props": { "tone": "accent", "speed": 20 } } }
+```
+
+Backgrounds share the `block:` namespace with blocks, so `blocks/aurora/` and `backgrounds/aurora/` cannot both exist in an extension. A background cannot be placed as an element; such a node is dropped when a layout is saved.
+
+### background.json
+
+```json
+{
+  "title": "Aurora",
+  "description": "Northern lights behind a section, row or column.",
+  "icon": "mdi:weather-night",
+  "keywords": ["glow", "night"],
+  "props": {
+    "tone": { "type": "color", "label": "Tone", "default": "primary", "group": "Colors" },
+    "speed": { "type": "int", "label": "Speed", "min": 1, "max": 60, "default": 20, "control": "slider", "group": "Motion" }
+  },
+  "variations": [
+    { "name": "calm", "title": "Calm aurora", "props": { "speed": 40 } }
+  ],
+  "section": {
+    "props": { "min_height": "half", "vertical_align": "center" },
+    "style": { "background": "text", "text_color": "background", "link_color": "background" }
+  }
+}
+```
+
+The fields are those of [block.json](#block-json) except `category` and `allowed_children`, plus `section`:
+
+| Field | Meaning |
+| --- | --- |
+| `props` | Up to 32 props with the [inspector options](#inspector-options) of blocks, including [shared props](#shared-props). Backgrounds are visual, so the types are limited to `bool`, `int`, `enum`, `icon`, `color`, `space`, `radius` and `shadow`. They are neither translated per language nor bound to content. |
+| `variations` | Each is its own **Effect sections** entry that starts the background with these values. |
+| `section` | How a section added from the palette starts: section `props` (such as `width`, `min_height`, `vertical_align`) and `style` (such as `background`, `text_color`, `link_color`, padding). Values must be ones a section keeps as written, so typos are reported. Background media, conditions, classes, anchors and `background_fx` itself cannot be set here. Without `section`, the entry inserts a plain one-column section. |
+| `deprecated`, `aliases`, `keywords`, `icon`, `description` | As for blocks. A deprecated background leaves the palette and the picker, while nodes that use it keep it. |
+
+The palette section has one column, ready for more. Dropped into a column, where only rows fit, the entry places its row, and the row takes the background and any of the section's style that rows support.
+
+Choose starting colors from the theme, as above, rather than fixed values. A dark surface such as `background: text` with `text_color: background` follows the theme and its light/dark mode.
+
+### Layer markup and CSS
+
+The renderer puts the background into its own layer as the first child of the section, row or column:
+
+```html
+<section class="c-section … c-has-bg-fx">
+  <div class="c-background-fx c-block-acme__aurora" aria-hidden="true">
+    <!-- template.html, rendered with the props -->
+  </div>
+  <div class="c-container">…rows and columns…</div>
+</section>
+```
+
+The layer is positioned over the whole node (`position: absolute; inset: 0`), below the content, and clips only itself, so menus and focus outlines inside the section are not cut off. It ignores the pointer, is hidden from assistive technology and is hidden in forced-colors mode. It is drawn over the background color, gradient and background image or video, and under the overlay. The node's own **Background** color is the surface behind it, so let the layer be transparent where the surface should show.
+
+Templates follow the rules of [template.html](#template-html), without a `<slot>`. Theme values print as their CSS in style properties, so `style="--aurora-tone: {{tone}}"` becomes `--aurora-tone: var(--c-primary)`:
+
+```html
+<div class="acme-aurora" data-speed="{{speed}}" style="--aurora-tone: {{tone}}">
+  <span class="acme-aurora__ribbon"></span>
+</div>
+```
+
+```css
+.acme-aurora { position: absolute; inset: 0; }
+.acme-aurora__ribbon {
+  position: absolute; inset: -20%;
+  background: radial-gradient(ellipse, var(--aurora-tone, #818cf8), transparent 65%);
+  animation: acme-aurora 24s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) { .acme-aurora__ribbon { animation: none; } }
+```
+
+Scope selectors to your own classes or to the layer class `.c-block-<vendor>__<name>`. A page includes a background's CSS, and its extension's root `style.css`, only when it renders that background. CSS that blocks and backgrounds of the extension share belongs in the root `style.css`. Stop animations for reduced motion, and offer a still option for busy effects.
+
+### Scripts on backgrounds
+
+A `view.js` works as it does for [blocks](#javascript): `mount(element, props, ctx)`, called with the layer as `element`. The same installation consent, Content-Security-Policy and [network permissions](#network-permissions) apply. A script can draw everything itself, so `template.html` is optional:
+
+```js
+// backgrounds/ripple/view.js
+export default function mount(layer, props, ctx) {
+  const canvas = document.createElement('canvas');
+  layer.append(canvas);
+  // The layer ignores the pointer, so listen on the window and compare with the canvas bounds.
+  window.addEventListener('pointermove', onMove, { passive: true, signal: ctx.signal });
+  const visibility = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()));
+  visibility.observe(layer);
+  return () => { stop(); visibility.disconnect(); canvas.remove(); };
+}
+```
+
+- **Pointer.** The layer has `pointer-events: none`, so content above it stays clickable. React to `pointermove` and `pointerdown` on the window, check the position against the layer, and leave clicks on links, buttons and form fields to them.
+- **Colors.** `color` props arrive as `{ _: "accent", css: "var(--c-accent)" }`. To paint with one on a canvas, resolve it with `getComputedStyle` on the layer, and again when the theme changes: the site's light/dark toggle sets `data-theme` on `<html>`, and `prefers-color-scheme` can change too.
+- **Cost.** Backgrounds often cover the whole screen. Pause while the layer is out of view and while `document.hidden`, stop animating once nothing moves, and respect `prefers-reduced-motion`.
+- **Preview.** Scripts run in the builder too; `ctx.preview` is `true` there. A cleanup function lets the builder remount the layer in place when its props change.
+
+[Water Ripple](#example-extensions) shows all of this in one file.
+
+### Translations of backgrounds
+
+Translate backgrounds under `backgrounds` in `i18n/<locale>.json`, with the same entries as blocks except `category`:
+
+```json
+"backgrounds": {
+  "aurora": { "title": "Polarlicht", "props": { "speed": { "label": "Tempo" } }, "variations": { "calm": { "title": "Ruhiges Polarlicht" } } }
+}
+```
+
+### Backgrounds for agents
+
+`list_extensions` marks backgrounds with `"background": true`, and `get_builder_schema` with a background's kind lists its props. Agents set a background as `style.background_fx` = `{kind, props}` on a section, row or column, and remove it with `[]`. Values that the layout schema would change or drop are reported, as for other styles.
+
 ## Seeded site content
 
 ```text
 comet-extension.json          # the only required file
 blocks/<name>/…               # optional reusable blocks
-assets/…                      # optional block assets
+backgrounds/<name>/…          # optional section, row and column backgrounds
+assets/…                      # optional block and background assets
 content-types/<name>.json     # ContentTypeRepository schema
 components/<id>.json          # {name, root, type, nodes}
 templates/<type>/<variant>.json
@@ -485,7 +631,8 @@ The extensions in `examples/extensions/` are working references, each packed nex
 | **Comet Essentials** (`cometcms/essentials`) | Eleven blocks: media, link, list, rich-text, icon and color props, a slot (Card), [scripts](#javascript), [settings](#settings), [variations](#palette-categories-keywords-and-variations), grouped and conditional [inspector options](#inspector-options) and German [translations](#translations). |
 | **Comet Weather** (`cometcms/weather`) | Everything beyond plain blocks in one block: settings, [network permissions](#network-permissions), translations, the script lifecycle, a palette category and variation, inspector groups and conditions, and [migrations](#migrations). It shows the current weather from the free Open-Meteo service. |
 | **Menu Variations** (`cometcms/menu-variations`) | Six navigation blocks in a **Navigation** palette category, built on `menu` props. They reuse [shared props](#shared-props) for the menu, colors, corners and spacing, and `radius` [theme values](#template-html) for corners, migrated from an earlier enum with `option_aliases`. |
-| **Fancy BG Containers** (`cometcms/fancy-bg-containers`) | Four decorative containers with a slot and CSS-only motion that respects reduced motion. Apart from the background style, all their controls are shared props. Place one in a single-column full-width section to use it as a section background. |
+| **Fancy Backgrounds** (`cometcms/fancy-bg-containers`) | Four CSS-only [backgrounds](#backgrounds) (geometric forms, soft lights, deep space, a futuristic grid) with motion that respects reduced motion, shared effect props, a dark `section` start and German translations. Its earlier slot containers are kept as [deprecated](#block-json) blocks, so existing pages keep rendering, and show how to retire blocks. |
+| **Water Ripple** (`cometcms/water-ripple`) | An interactive [background](#scripts-on-backgrounds) drawn by a self-contained `view.js` without a template: a canvas dot lattice that ripples under the pointer, with theme colors resolved for the canvas and on light/dark switches, sliders, a variation, and pausing while out of view, while settled and for reduced motion. |
 | **Mobility Infographic** (`verkehrsinitiative/mobility`) | The original six-ring Verkehrsinitiative transport graphic, with editable explanations, hover/tap/keyboard selection, German editor labels and a readable fallback without JavaScript. Artwork is bundled locally. |
 | **Comet Portfolio** (`cometcms/portfolio`) | Seeded site content: a content type, a component, a template list and a preset, plus a [dependency](#dependencies) on Essentials. Install Essentials first. The project schema and field-bound case-study template demonstrate media, Markdown, selects, dates, numbers, booleans, a range meter, a color swatch, result repeaters and related-project cards. Upload it again to try the per-item conflict choices. |
 | **Comet ThemePack** (`cometcms/theme-pack`) | Four themes (Neo-Brutalism, Industrial, Material-inspired and Orbital) with a bundled [font](#seeded-site-content) and three editable Neo-Brutalism section components. Choose a theme in the designer and save to apply it. No blocks or scripts. |
@@ -498,11 +645,11 @@ Version 2.0 of the ThemePack renamed it from `cometcms/neo-brutalism`, its name 
 | --- | --- | --- |
 | Install | Upload a ZIP in **Website Settings → Extensions**, or copy the extension folder to `cms/storage/workspaces/<workspace>/site/extensions/<vendor>/<extension>/` (`storage/…` in a production build) | The extension is validated completely before anything is written. A rejected upload changes nothing. |
 | Update | Upload an extension with the same name | Placed blocks change immediately. If the update removes a block, slot or prop, changes a prop's type, drops an enum option, narrows an integer range or reduces a text, URL or list limit, the preview lists these changes and asks for confirmation first. |
-| Delete | **Delete** beside the extension, or remove its folder | Placed blocks keep their settings in the layouts. The builder shows them as missing blocks, and the website omits them until the extension is installed again. |
+| Delete | **Delete** beside the extension, or remove its folder | Placed blocks keep their settings in the layouts. The builder shows them as missing blocks, and the website omits them until the extension is installed again. Chosen backgrounds keep their settings too and draw nothing meanwhile; the picker shows them as unavailable. |
 
 Use **Enable** or **Disable** in **Website Settings → Extensions** to change an extension’s status. Extensions are enabled when installed. Disabling removes their blocks from the builder palette and stops rendering their blocks, styles and scripts on the website. Everything the extension seeded is hidden too: imported content types and their entries disappear from admin navigation, entry lists, the API and public pages; imported components disappear from the component library and picker, and their placements stop rendering on the website (the builder shows them as unavailable); imported themes disappear from the theme list. A design already applied from one keeps its values. Their files, saved block values, nested content, routes and homepage settings remain stored. Re-enabling restores the blocks, imported types with their entries, components and presets; updating a disabled extension keeps it disabled. Status is stored per workspace in `site/extensions-state.json` and included in workspace backups. Reload an open builder after changing status.
 
-Extensions belong to one workspace and are independent of its theme. Workspace backups include them. A workspace holds up to 64 extensions and 256 blocks; an extension holds up to 64 blocks, 500 files and 25 MiB.
+Extensions belong to one workspace and are independent of its theme. Workspace backups include them. A workspace holds up to 64 extensions and 256 blocks; an extension holds up to 64 blocks, 500 files and 25 MiB. Backgrounds count as blocks for these limits.
 
 Copied folders register their blocks on the next request. They do not seed site content; upload the ZIP through the admin to preview and copy seeds. CometCMS keeps a compiled index of all extensions and rebuilds it whenever an extension file's size, modification time or inode changes. Extensions in the folder that fail validation are listed with their errors and a **Delete** action in **Extensions**, without affecting the other extensions. The folder name must match the extension `name`. Reload an open builder after installing or updating an extension.
 
@@ -536,15 +683,15 @@ blocks/feature/style.css:1: The relative URL "images/bg.png" would resolve again
 | Command | Does |
 | --- | --- |
 | `npm run extensions -- new <folder> [vendor/name] [--block <name>]` | Creates a valid extension with one block that uses a shared prop and theme values. Never overwrites a non-empty folder. |
-| `npm run extensions -- validate <folder-or-zip> [--json]` | Runs every compiler check. With `--json`, prints `{"ok": true, "name", "version", "blocks", "scripts", "seeds"}` or `{"ok": false, "errors": [{file, line, message}]}`; the exit code is 0 or 1 either way. |
+| `npm run extensions -- validate <folder-or-zip> [--json]` | Runs every compiler check. With `--json`, prints `{"ok": true, "name", "version", "blocks", "backgrounds", "scripts", "seeds"}` or `{"ok": false, "errors": [{file, line, message}]}`; the exit code is 0 or 1 either way. |
 | `npm run extensions -- render <folder-or-zip> <block> [props.json] [--json]` | Prints a block's HTML with its defaults, or with the prop values in `props.json`. Theme values become their CSS, and media, links and menus get placeholders, so you can check markup and classes without a site. Scripts do not run. |
 | `npm run extensions -- pack <folder> [output.zip]` | Validates, then writes the ZIP. |
 
 The loop for coding agents: edit the extension, run `validate --json`, fix what it reports, and `render` the blocks you changed.
 
-**JSON schemas.** `schemas/comet-extension.schema.json`, `schemas/block.schema.json` and `schemas/i18n.schema.json` (JSON Schema draft-07) describe the manifest, `block.json` and translation files. Reference them with a `$schema` path, as the examples and `new` do, so editors complete fields and flag mistakes while you type. The compiler remains the authority: it also checks templates, CSS, assets, defaults against limits, and how files refer to each other.
+**JSON schemas.** `schemas/comet-extension.schema.json`, `schemas/block.schema.json`, `schemas/background.schema.json` and `schemas/i18n.schema.json` (JSON Schema draft-07) describe the manifest, `block.json`, `background.json` and translation files. Reference them with a `$schema` path, as the examples and `new` do, so editors complete fields and flag mistakes while you type. The compiler remains the authority: it also checks templates, CSS, assets, defaults against limits, and how files refer to each other.
 
-**MCP.** Agents with builder access call `list_extensions` to see the installed extensions and what each block is for, then `get_builder_schema` with a block's kind for its props. Space and radius props appear there as enums of the theme tokens. Installing extensions and changing their settings stay in the admin, because scripts need an administrator's confirmation.
+**MCP.** Agents with builder access call `list_extensions` to see the installed extensions and what each block is for, then `get_builder_schema` with a block's kind for its props. Space and radius props appear there as enums of the theme tokens. [Backgrounds](#backgrounds-for-agents) are set as a style instead of placed. Installing extensions and changing their settings stay in the admin, because scripts need an administrator's confirmation.
 
 ## Trust and permissions
 
